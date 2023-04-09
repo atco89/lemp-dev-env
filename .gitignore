@@ -1,0 +1,7 @@
+/.idea/
+/src
+/docker/.env
+/docker/web/logs/
+/docker/web/ssl/certs/
+/docker/database/backup/
+/docker/database/dump/
