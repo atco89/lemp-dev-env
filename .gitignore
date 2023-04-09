@@ -1,5 +1,4 @@
 /.idea/
-/src
 /docker/.env
 /docker/web/logs/
 /docker/web/ssl/certs/
