@@ -14,8 +14,8 @@ At the end you will be able to use followings:
 
 ```
 https://localhost               - PHP
-https://swagger.ui.localhost    - ADMINER (database management tool)
-https://adminer.localhost       - SWAGGER UI (visualize and interact with the API’s resources)
+https://swagger.ui.localhost    - SWAGGER UI (visualize and interact with the API’s resources)
+https://adminer.localhost       - ADMINER (database management tool)
 ```
 
 #### PLEASE NOTE THAT COMMAND ABOVE WILL CLEAR ALL EXISTING CONTAINERS AND VOLUMES.
