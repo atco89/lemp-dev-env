@@ -1,14 +1,15 @@
 include ./docker/.env
 
-SSL_DIR = $(CURDIR)/docker/web/ssl
+SSL_DIR := $(PWD)/docker/web/ssl
+PUBLIC_DIR_PATH := $(PWD)/src/public
 
 .PHONY: help # Generate list of targets with descriptions.
 help:
-	@grep '^.PHONY: .* #' Makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1:\t\2/' | column -ts "$$(printf '\t')"
+	@grep '^.PHONY: .* #' Makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1:\t\t\t\t\t\2/' | column -ts "$$(printf '\t')"
 
-.PHONY: start # Clean all, generate SSL certificates, install containers, setup git user and show status.
-start:
-	$(MAKE) kill clean certs install git status
+.PHONY: init # Clean all, generate SSL certificates, install containers, setup git user and show status.
+init:
+	$(MAKE) kill clean certs phpinfo install git status
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -35,18 +36,29 @@ certs:
 		-out "$(SSL_DIR)/certs/server.crt" \
 		-config "$(SSL_DIR)/openssl.cnf"
 
-	chmod -R 0777 $(CURDIR)
+	chmod -R 0777 $(PWD)
 
 .PHONY: install # Build containers.
 install:
-	chmod -R 0777 $(CURDIR)
-	docker-compose -f "$(CURDIR)/docker/docker-compose.yaml" up -d --build
-	chmod -R 0777 $(CURDIR)
+	chmod -R 0777 $(PWD)
+	docker-compose -f "$(PWD)/docker/docker-compose.yaml" up -d --build
+	chmod -R 0777 $(PWD)
 
 .PHONY: git # Configure git user name and email.
 git:
 	git config user.name $(GIT_NAME)
 	git config user.email $(GIT_EMAIL)
+
+.PHONY: phpinfo # Create public directory inside source directory with index.php file which as an output gives information's about php version installed.
+phpinfo:
+	if [ -d $(PUBLIC_DIR_PATH) ]; \
+		then rm -rf $(PUBLIC_DIR_PATH); \
+	fi
+
+	chmod -R 0777 $(PWD)
+	mkdir -p -m 0777 $(PUBLIC_DIR_PATH)
+	echo "<?php\n\nphpinfo();" >> "$(PUBLIC_DIR_PATH)/index.php"
+	chmod -R 0777 $(PWD)
 
 .PHONY: status # List all images, volumes and containers status.
 status:
@@ -60,7 +72,7 @@ status:
 
 .PHONY: push # Push all changes on current branch.
 push:
-	git add $(CURDIR)
+	git add $(PWD)
 	git commit -m "[`date +'%Y-%m-%d'`] - work in progress."
 	git push
 
@@ -74,13 +86,13 @@ mysql:
 
 .PHONY: backup # Backup database.
 backup:
-	chmod -R 0777 $(CURDIR)
-	docker exec mysql "/usr/bin/mysqldump" -u root --password=$(DB_ROOT_PASS) $(DB_NAME) > "$(CURDIR)/docker/database/dump/$(DB_NAME)_dump.sql"
-	chmod -R 0777 $(CURDIR)
+	chmod -R 0777 $(PWD)
+	docker exec mysql "/usr/bin/mysqldump" -u root --password=$(DB_ROOT_PASS) $(DB_NAME) > "$(PWD)/docker/database/dump/$(DB_NAME)_dump.sql"
+	chmod -R 0777 $(PWD)
 
 .PHONY: restore # Restore the latest database backup.
 restore:
-	cat "$(CURDIR)/docker/database/dump/$(DB_NAME)_dump.sql" | docker exec -i database /usr/bin/mysql -u root --password=$(DB_ROOT_PASS) $(DB_NAME)
+	cat "$(PWD)/docker/database/dump/$(DB_NAME)_dump.sql" | docker exec -i database "/usr/bin/mysql" -u root --password=$(DB_ROOT_PASS) $(DB_NAME)
 
 .PHONY: logs # Show logs for selected containers. Provide `NAME` variable with container name to show the last 50 logs.
 logs:

@@ -4,3 +4,4 @@
 /docker/web/ssl/certs/
 /docker/database/backup/
 /docker/database/dump/
+/src/
