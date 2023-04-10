@@ -8,6 +8,7 @@ services:
     volumes:
       - ./../src:/var/www/html
       - ./web/config/nginx.conf:/etc/nginx/nginx.conf
+      - ./web/config/fragments:/etc/nginx/fragments
       - ./web/ssl/certs:/etc/nginx/ssl
       - ./web/logs:/var/log/nginx
     ports:
