@@ -11,7 +11,7 @@ services:
       - ./web/ssl/certs:/etc/nginx/ssl
       - ./web/logs:/var/log/nginx
     ports:
-      - '8888:80'
+      - '80:80'
       - '443:443'
     depends_on:
       - mysql
@@ -46,8 +46,28 @@ services:
     ports:
       - '6603:3306'
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-p ${DB_PASS}']
+      test: [ 'CMD', 'mysqladmin', 'ping', '-p ${DB_PASS}' ]
       retries: 3
       timeout: 5s
     env_file:
       - ./.env
+  adminer:
+    container_name: adminer
+    restart: unless-stopped
+    image: adminer:latest
+    environment:
+      ADMINER_DEFAULT_DB_HOST: mysql
+      ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
+      ADMINER_DESIGN: 'pepa-linha'
+    depends_on:
+      - mysql
+    env_file:
+      - ./.env
+  swagger-ui:
+    container_name: swagger
+    restart: unless-stopped
+    image: swaggerapi/swagger-ui:latest
+    volumes:
+      - ./../openapi/docs/openapi.yaml:/openapi.yaml
+    environment:
+      SWAGGER_JSON: /openapi.yaml
