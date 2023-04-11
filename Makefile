@@ -91,13 +91,14 @@ mysql:
 
 .PHONY: backup # Backup database.
 backup:
+	- mkdir -m 0777 "$(PWD)/docker/database/dump"
 	chmod -R 0777 $(PWD)
-	docker exec mysql "/usr/bin/mysqldump" -u root --password=$(DB_ROOT_PASS) $(DB_NAME) > "$(PWD)/docker/database/dump/$(DB_NAME)_dump.sql"
+	docker exec mysql "/usr/bin/mysqldump" -u root --password="$(DB_ROOT_PASS)" $(DB_NAME) > "$(PWD)/docker/database/dump/$(DB_NAME)_dump.sql"
 	chmod -R 0777 $(PWD)
 
 .PHONY: restore # Restore the latest database backup.
 restore:
-	cat "$(PWD)/docker/database/dump/$(DB_NAME)_dump.sql" | docker exec -i database "/usr/bin/mysql" -u root --password=$(DB_ROOT_PASS) $(DB_NAME)
+	cat "$(PWD)/docker/database/dump/$(DB_NAME)_dump.sql" | docker exec -i mysql "/usr/bin/mysql" -u root --password=$(DB_ROOT_PASS) $(DB_NAME)
 
 .PHONY: logs # Show logs for selected containers. Provide `NAME` variable with container name to show the last 50 logs.
 logs:
