@@ -79,11 +79,11 @@ push:
 
 .PHONY: php # Open php container terminal.
 php:
-	docker exec -it php bash
+	docker exec -it php sh
 
 .PHONY: mysql # Open mysql container terminal.
 mysql:
-	docker exec -it mysql bash
+	docker exec -it mysql sh
 
 .PHONY: backup # Backup database.
 backup:
