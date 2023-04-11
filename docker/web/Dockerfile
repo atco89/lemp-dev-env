@@ -31,6 +31,10 @@ RUN docker-php-ext-install pdo \
 # install composer.
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin/ --filename=composer
 
+# set default time zone to Belgrade.
+ENV TZ=Europe/Belgrade
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 # copy files from source directory.
 COPY ./../src /var/www/html
 

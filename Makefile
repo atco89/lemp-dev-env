@@ -7,9 +7,13 @@ PUBLIC_DIR_PATH := $(PWD)/src/public
 help:
 	@grep '^.PHONY: .* #' Makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1:\t\t\t\t\t\2/' | column -ts "$$(printf '\t')"
 
-.PHONY: init # Clean all, generate SSL certificates, install containers, setup git user and show status.
+.PHONY: init # Clean all, generate SSL certificates, install containers, setup git user, add phpinfo file and show status.
 init:
 	$(MAKE) kill clean certs phpinfo install git status
+
+.PHONY: restart # Clean all, generate SSL certificates, install containers, setup git user and show status.
+restart:
+	$(MAKE) kill clean certs install git status
 
 .PHONY: kill # Kill all available containers.
 kill:
