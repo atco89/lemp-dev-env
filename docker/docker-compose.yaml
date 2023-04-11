@@ -17,9 +17,8 @@ services:
     depends_on:
       - mysql
       - php
-    links:
-      - mysql
-      - php
+      - adminer
+      - swagger-ui
   php:
     container_name: php
     restart: unless-stopped
@@ -65,10 +64,14 @@ services:
     env_file:
       - ./.env
   swagger-ui:
-    container_name: swagger
+    container_name: swagger-ui
     restart: unless-stopped
     image: swaggerapi/swagger-ui:latest
     volumes:
-      - ./../openapi/docs/openapi.yaml:/openapi.yaml
+      - ${OPENAPI_YAML}:/openapi.yaml
     environment:
       SWAGGER_JSON: /openapi.yaml
+    depends_on:
+      - php
+    env_file:
+      - ./.env

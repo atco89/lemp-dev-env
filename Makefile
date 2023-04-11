@@ -28,6 +28,7 @@ certs:
 	mkdir -m 0777 "$(SSL_DIR)/certs"
 
 	openssl req \
+		-utf8 \
 		-x509 \
 		-nodes \
 		-days 365 \
