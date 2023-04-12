@@ -4,4 +4,7 @@
 /docker/web/ssl/certs/
 /docker/database/backup/
 /docker/database/dump/
+/docker/database/scripts
 /src/
+
+!/docker/database/scripts/.keepme
