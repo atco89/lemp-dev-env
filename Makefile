@@ -11,8 +11,8 @@ help:
 init:
 	$(MAKE) kill clean certs phpinfo install git status
 
-.PHONY: restart # Clean all, generate SSL certificates, install containers, setup git user and show status.
-restart:
+.PHONY: start # Clean all, generate SSL certificates, install containers, setup git user and show status.
+start:
 	$(MAKE) kill clean certs install git status
 
 .PHONY: kill # Kill all available containers.
