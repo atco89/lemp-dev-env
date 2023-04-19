@@ -50,8 +50,6 @@ services:
       test: [ 'CMD', 'mysqladmin', 'ping', '-p ${DB_PASS}' ]
       retries: 3
       timeout: 5s
-    env_file:
-      - '${PWD}/docker/.env'
   adminer:
     container_name: adminer
     restart: unless-stopped
@@ -62,8 +60,6 @@ services:
       ADMINER_DESIGN: 'pepa-linha'
     depends_on:
       - mysql
-    env_file:
-      - '${PWD}/docker/.env'
   swagger:
     container_name: swagger
     restart: unless-stopped
@@ -74,5 +70,3 @@ services:
       SWAGGER_JSON: /openapi.yaml
     depends_on:
       - php
-    env_file:
-      - '${PWD}/docker/.env'
