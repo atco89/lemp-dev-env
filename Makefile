@@ -46,7 +46,7 @@ certs:
 .PHONY: install # Build containers.
 install:
 	chmod -R 0777 $(PWD)
-	docker-compose -f "$(PWD)/docker/docker-compose.yaml" up -d --build
+	docker-compose -f "$(PWD)/docker/docker-compose.yaml" --env-file "$(PWD)/docker/.env" up -d --build
 	chmod -R 0777 $(PWD)
 
 .PHONY: git # Configure git user name and email.
