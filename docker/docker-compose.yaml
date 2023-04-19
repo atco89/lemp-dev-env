@@ -18,7 +18,7 @@ services:
       - mysql
       - php
       - adminer
-      - swagger-ui
+      - swagger
   php:
     container_name: php
     restart: unless-stopped
@@ -64,8 +64,8 @@ services:
       - mysql
     env_file:
       - ./.env
-  swagger-ui:
-    container_name: swagger-ui
+  swagger:
+    container_name: swagger
     restart: unless-stopped
     image: swaggerapi/swagger-ui:latest
     volumes:
