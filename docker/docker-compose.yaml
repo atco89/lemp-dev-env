@@ -51,7 +51,7 @@ services:
       retries: 3
       timeout: 5s
     env_file:
-      - ./.env
+      - '${PWD}/docker/.env'
   adminer:
     container_name: adminer
     restart: unless-stopped
@@ -63,7 +63,7 @@ services:
     depends_on:
       - mysql
     env_file:
-      - ./.env
+      - '${PWD}/docker/.env'
   swagger:
     container_name: swagger
     restart: unless-stopped
@@ -75,4 +75,4 @@ services:
     depends_on:
       - php
     env_file:
-      - ./.env
+      - '${PWD}/docker/.env'
