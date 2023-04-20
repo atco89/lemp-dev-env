@@ -55,6 +55,7 @@ services:
     restart: unless-stopped
     image: adminer:latest
     environment:
+      ADMINER_DEFAULT_SERVER: mysql
       ADMINER_DEFAULT_DB_HOST: mysql
       ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
       ADMINER_DESIGN: 'pepa-linha'
