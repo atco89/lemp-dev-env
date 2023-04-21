@@ -4,6 +4,7 @@
 /docker/database/dump
 /docker/database/scripts
 /docker/web/log
+/docker/web/nginx/config/fragments/auth/.htpasswd
 /docker/web/nginx/ssl/certs
 /src/
 
