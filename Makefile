@@ -45,7 +45,7 @@ certs:
 
 .PHONY: htpasswd # Generate htpasswd file with defined user and password.
 htpasswd:
-	docker exec nginx htpasswd -cbB "/etc/nginx/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
+	htpasswd -cbB "$(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
 
 .PHONY: install # Build containers.
 install:
