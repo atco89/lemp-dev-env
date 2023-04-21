@@ -36,7 +36,7 @@ ENV TZ=Europe/Belgrade
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # copy files from source directory.
-COPY ./src /var/www/html
+COPY ./docker/web/php/Dockerfile /var/www/html
 
 # set working directory.
 WORKDIR /var/www/html
