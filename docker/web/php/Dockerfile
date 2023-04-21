@@ -1,4 +1,4 @@
-# php image with version 8.2 on alpine linux distribution.
+# php image with version 8.2 FPM on alpine linux distribution.
 FROM php:8.2-fpm-alpine
 
 # dockerfile maintainer name, surname and contact email.
@@ -36,7 +36,7 @@ ENV TZ=Europe/Belgrade
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # copy files from source directory.
-COPY ./src /var/www/html
+COPY ./../../../src /var/www/html
 
 # set working directory.
 WORKDIR /var/www/html

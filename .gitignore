@@ -1,10 +1,11 @@
 /.idea/
 /docker/.env
-/docker/web/logs/
-/docker/web/ssl/certs/
-/docker/database/backup/
-/docker/database/dump/
+/docker/database/backup
+/docker/database/dump
 /docker/database/scripts
+/docker/web/log
+/docker/web/nginx/ssl/certs
 /src/
 
+!/docker/web/log/.keepme
 !/docker/database/scripts/.keepme

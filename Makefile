@@ -1,6 +1,6 @@
 include ./docker/.env
 
-SSL_DIR := $(PWD)/docker/web/ssl
+SSL_DIR := $(PWD)/docker/web/nginx/ssl
 PUBLIC_DIR_PATH := $(PWD)/src/public
 
 .PHONY: help # Generate list of targets with descriptions.
@@ -9,11 +9,11 @@ help:
 
 .PHONY: init # Clean all, generate SSL certificates, install containers, setup git user, add phpinfo file and show status.
 init:
-	$(MAKE) kill clean certs phpinfo install git status
+	$(MAKE) start phpinfo
 
 .PHONY: start # Clean all, generate SSL certificates, install containers, setup git user and show status.
 start:
-	$(MAKE) kill clean certs install git status
+	$(MAKE) kill clean certs install git htpasswd
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -42,6 +42,10 @@ certs:
 		-config "$(SSL_DIR)/openssl.cnf"
 
 	chmod -R 0777 $(PWD)
+
+.PHONY: htpasswd # Generate htpasswd file with defined user and password.
+htpasswd:
+	docker exec nginx htpasswd -cbB "/etc/nginx/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
 
 .PHONY: install # Build containers.
 install:
