@@ -11,9 +11,20 @@ help:
 init:
 	$(MAKE) start phpinfo
 
+.PHONY: phpinfo # Create public directory inside source directory with index.php file which as an output gives information's about php version installed.
+phpinfo:
+	if [ -d $(PUBLIC_DIR_PATH) ]; \
+		then rm -rf $(PUBLIC_DIR_PATH); \
+	fi
+
+	chmod -R 0777 $(PWD)
+	mkdir -p -m 0777 $(PUBLIC_DIR_PATH)
+	echo "<?php\n\nphpinfo();" >> "$(PUBLIC_DIR_PATH)/index.php"
+	chmod -R 0777 $(PWD)
+
 .PHONY: start # Clean all, generate SSL certificates, install containers, setup git user and show status.
 start:
-	$(MAKE) kill clean certs install git htpasswd
+	$(MAKE) kill clean certs install htpasswd
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -43,32 +54,28 @@ certs:
 
 	chmod -R 0777 $(PWD)
 
-.PHONY: htpasswd # Generate htpasswd file with defined user and password.
-htpasswd:
-	- apt-get install apache2-utils
-	htpasswd -cbB "$(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
-
 .PHONY: install # Build containers.
 install:
 	chmod -R 0777 $(PWD)
 	docker-compose -f "$(PWD)/docker/docker-compose.yaml" --env-file "$(PWD)/docker/.env" up -d --build
 	chmod -R 0777 $(PWD)
 
+.PHONY: htpasswd # Generate htpasswd file with defined user and password.
+htpasswd:
+	- apt-get install apache2-utils
+	htpasswd -cbB "$(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
+
+.PHONY: push # Push all changes on current branch.
+push:
+	$(MAKE) git
+	git add $(PWD)
+	git commit -m "[`date +'%Y-%m-%d'`] - work in progress."
+	git push
+
 .PHONY: git # Configure git user name and email.
 git:
 	git config user.name $(GIT_NAME)
 	git config user.email $(GIT_EMAIL)
-
-.PHONY: phpinfo # Create public directory inside source directory with index.php file which as an output gives information's about php version installed.
-phpinfo:
-	if [ -d $(PUBLIC_DIR_PATH) ]; \
-		then rm -rf $(PUBLIC_DIR_PATH); \
-	fi
-
-	chmod -R 0777 $(PWD)
-	mkdir -p -m 0777 $(PUBLIC_DIR_PATH)
-	echo "<?php\n\nphpinfo();" >> "$(PUBLIC_DIR_PATH)/index.php"
-	chmod -R 0777 $(PWD)
 
 .PHONY: status # List all images, volumes and containers status.
 status:
@@ -79,12 +86,6 @@ status:
 	@echo "=================================================="
 	docker volume ls
 	@echo "=================================================="
-
-.PHONY: push # Push all changes on current branch.
-push:
-	git add $(PWD)
-	git commit -m "[`date +'%Y-%m-%d'`] - work in progress."
-	git push
 
 .PHONY: php # Open php container terminal.
 php:
