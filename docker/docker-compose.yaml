@@ -1,0 +1,64 @@
+version: "3"
+
+services:
+  nginx:
+    container_name: nginx
+    restart: unless-stopped
+    image: nginx:latest
+    volumes:
+      - ./web/nginx/ssl/certs:/etc/nginx/ssl
+      - ./web/nginx/config/fragments:/etc/nginx/fragments
+      - ./web/nginx/config/nginx.conf:/etc/nginx/nginx.conf
+      - ./web/log/nginx:/var/log/nginx
+      - ./../src:/var/www/html
+    ports:
+      - '80:80'
+      - '443:443'
+    depends_on:
+      - mysql
+      - php
+      - adminer
+  php:
+    container_name: php
+    restart: unless-stopped
+    build:
+      context: ./../
+      dockerfile: ./docker/web/php/Dockerfile
+    volumes:
+      - ./../src:/var/www/html
+      - ./web/php/php.ini:/usr/local/etc/php/conf.d/php.ini
+      - ./web/php/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+    depends_on:
+      - mysql
+    links:
+      - mysql
+  mysql:
+    container_name: mysql
+    restart: unless-stopped
+    image: mysql:latest
+    volumes:
+      - ./database/config/my.cnf:/etc/my.cnf
+      - ./database/scripts:/docker-entrypoint-initdb.d
+      - ./database/backup:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    ports:
+      - '6603:3306'
+    healthcheck:
+      test: [ 'CMD', 'mysqladmin', 'ping', '-p ${DB_PASS}' ]
+      retries: 3
+      timeout: 5s
+  adminer:
+    container_name: adminer
+    restart: unless-stopped
+    image: adminer:latest
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql
+      ADMINER_DEFAULT_DB_HOST: mysql
+      ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
+      ADMINER_DESIGN: 'pepa-linha'
+    depends_on:
+      - mysql
