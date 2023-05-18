@@ -6,6 +6,7 @@ MAINTAINER Aleksandar Rakić <aleksandar.rakic@yahoo.com>
 
 # update or install required packages.
 RUN apk upgrade && apk add  \
+    libpq-dev \
     libwebp-dev \
     libjpeg-turbo-dev \
     libpng-dev \
@@ -22,7 +23,7 @@ RUN docker-php-ext-configure gd --with-jpeg --with-freetype
 
 # install php extensions.
 RUN docker-php-ext-install pdo \
-    pdo_mysql \
+    pdo_pgsql \
     gd \
     sodium \
     zip \

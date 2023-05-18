@@ -10,3 +10,4 @@
 
 !/docker/web/log/.keepme
 !/docker/database/scripts/.keepme
+/rasa/

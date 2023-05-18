@@ -1,6 +1,7 @@
-version: "3"
+version: '3'
 
 services:
+
   nginx:
     container_name: nginx
     restart: unless-stopped
@@ -15,10 +16,10 @@ services:
       - '80:80'
       - '443:443'
     depends_on:
-      - mysql
+      - postgres
       - php
       - adminer
-      - swagger
+
   php:
     container_name: php
     restart: unless-stopped
@@ -28,46 +29,83 @@ services:
     volumes:
       - ./../src:/var/www/html
     depends_on:
-      - mysql
+      - postgres
     links:
-      - mysql
-  mysql:
-    container_name: mysql
+      - postgres
+
+  postgres:
+    container_name: postgres
     restart: unless-stopped
-    image: mysql:latest
-    volumes:
-      - ./database/config/my.cnf:/etc/my.cnf
-      - ./database/scripts:/docker-entrypoint-initdb.d
-      - ./database/backup:/var/lib/mysql
+    image: postgres:latest
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
     ports:
-      - '6603:3306'
+      - '2345:5432'
     healthcheck:
-      test: [ 'CMD', 'mysqladmin', 'ping', '-p ${DB_PASS}' ]
-      retries: 3
-      timeout: 5s
+      test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'" ]
+      interval: 30s
+      timeout: 60s
+      retries: 5
+
   adminer:
     container_name: adminer
     restart: unless-stopped
     image: adminer:latest
     environment:
-      ADMINER_DEFAULT_SERVER: mysql
-      ADMINER_DEFAULT_DB_HOST: mysql
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DEFAULT_DB_HOST: postgres
       ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
       ADMINER_DESIGN: 'pepa-linha'
     depends_on:
-      - mysql
-  swagger:
-    container_name: swagger
+      - postgres
+
+  rasa:
+    container_name: rasa
     restart: unless-stopped
-    image: swaggerapi/swagger-ui:latest
+    image: rasa/rasa:latest-full
     volumes:
-      - ${OPENAPI_YAML}:/openapi.yaml
+      - ./../rasa:/app
+    ports:
+      - '5005:5005'
+      - '5010:5010'
     environment:
-      SWAGGER_JSON: /openapi.yaml
+      SQLALCHEMY_SILENCE_UBER_WARNING: 1
+    command:
+      - run
+      - --enable-api
     depends_on:
-      - php
+      - nginx
+      - postgres
+    links:
+      - nginx
+      - postgres
+
+  rasa-sdk:
+    container_name: rasa-sdk
+    restart: unless-stopped
+    image: rasa/rasa-sdk:latest
+    ports:
+      - '5055:5055'
+    volumes:
+      - ./../rasa/actions:/app/actions
+    depends_on:
+      - rasa
+      - postgres
+    links:
+      - rasa
+      - postgres
+
+  rasa-duckling:
+    container_name: rasa-duckling
+    restart: unless-stopped
+    image: rasa/duckling:latest
+    ports:
+      - '8000:8000'
+    depends_on:
+      - rasa
+      - rasa-sdk
+    links:
+      - rasa
+      - rasa-sdk
