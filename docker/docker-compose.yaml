@@ -19,6 +19,9 @@ services:
       - postgres
       - php
       - adminer
+      - rasa
+      - rasa-sdk
+      - rasa-duckling
 
   php:
     container_name: php
@@ -37,12 +40,12 @@ services:
     container_name: postgres
     restart: unless-stopped
     image: postgres:latest
+    ports:
+      - '2345:5432'
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASS}
-    ports:
-      - '2345:5432'
     healthcheck:
       test: [ "CMD-SHELL", "sh -c 'pg_isready -U ${DB_USER} -d ${DB_NAME}'" ]
       interval: 30s
@@ -78,10 +81,8 @@ services:
       - run
       - --enable-api
     depends_on:
-      - nginx
       - postgres
     links:
-      - nginx
       - postgres
 
   rasa-sdk:
@@ -94,10 +95,8 @@ services:
       - ./../rasa/actions:/app/actions
     depends_on:
       - rasa
-      - postgres
     links:
       - rasa
-      - postgres
 
   rasa-duckling:
     container_name: rasa-duckling
@@ -106,8 +105,6 @@ services:
     ports:
       - '8000:8000'
     depends_on:
-      - rasa
       - rasa-sdk
     links:
-      - rasa
       - rasa-sdk

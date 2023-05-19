@@ -28,9 +28,10 @@ start:
 			clean \
 			certs \
 			install \
-			htpasswd
-	sleep 25
-	$(MAKE) database
+			htpasswd \
+			wait DURATION=30 \
+			database \
+			status
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -68,7 +69,6 @@ install:
 
 .PHONY: htpasswd # Generate htpasswd file with defined user and password.
 htpasswd:
-	- apt-get install apache2-utils
 	htpasswd -cbB "$(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
 
 .PHONY: database # Install database.
@@ -76,6 +76,10 @@ database:
 	docker exec -it php sh -c 'php artisan migrate:install \
 								&& php artisan migrate:fresh \
 								&& php artisan db:seed'
+
+.PHONY: wait # Timeout execution duration is passed with param DURATION=100.
+wait:
+	sleep $(DURATION)
 
 .PHONY: push # Push all changes on current branch.
 push:
