@@ -22,9 +22,15 @@ phpinfo:
 	echo "<?php\n\nphpinfo();" >> "$(PUBLIC_DIR_PATH)/index.php"
 	chmod -R 0777 $(PWD)
 
-.PHONY: start # Clean all, generate SSL certificates, install containers, setup git user and show status.
+.PHONY: start # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
 start:
-	$(MAKE) kill clean certs install htpasswd
+	$(MAKE) kill \
+			clean \
+			certs \
+			install \
+			htpasswd
+	sleep 25
+	$(MAKE) database
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -64,6 +70,12 @@ install:
 htpasswd:
 	- apt-get install apache2-utils
 	htpasswd -cbB "$(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
+
+.PHONY: database # Install database.
+database:
+	docker exec -it php sh -c 'php artisan migrate:install \
+								&& php artisan migrate:fresh \
+								&& php artisan db:seed'
 
 .PHONY: push # Push all changes on current branch.
 push:
