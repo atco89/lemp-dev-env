@@ -22,6 +22,10 @@ phpinfo:
 	echo "<?php\n\nphpinfo();" >> "$(PUBLIC_DIR_PATH)/index.php"
 	chmod -R 0777 $(PWD)
 
+.PHONY: rasa # Start, train and run rasa chat bot.
+rasa:
+	$(MAKE) start && cd "$(PWD)/src" && $(MAKE) nlu
+
 .PHONY: start # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
 start:
 	$(MAKE) kill \
