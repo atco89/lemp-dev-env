@@ -40,8 +40,8 @@ services:
     ports:
       - '2345:5432'
     volumes:
-      - ./database/postgres:/var/lib/postgresql/data
-      - ./database/backup:/opt/backups
+      - ./database/backup:/var/lib/postgresql/data
+      - ./database/dump:/opt/dump
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
