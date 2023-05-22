@@ -1,5 +1,5 @@
 # rasa image latest full.
-FROM rasa/rasa:latest-full
+FROM rasa/rasa:3.5.8-full
 
 # dockerfile maintainer name, surname and contact email.
 MAINTAINER Aleksandar Rakić <aleksandar.rakic@yahoo.com>

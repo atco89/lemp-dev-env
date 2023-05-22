@@ -22,9 +22,9 @@ phpinfo:
 	echo "<?php\n\nphpinfo();" >> "$(PUBLIC_DIR_PATH)/index.php"
 	chmod -R 0777 $(PWD)
 
-.PHONY: rasa # Start, train and run rasa chat bot.
-rasa:
-	$(MAKE) start && cd "$(PWD)/src" && $(MAKE) nlu
+.PHONY: prod # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
+prod:
+	$(MAKE) start && cd $(PWD)/src && $(MAKE) nlu && cd $(PWD)
 
 .PHONY: start # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
 start:
@@ -35,6 +35,7 @@ start:
 			htpasswd \
 			wait DURATION=30 \
 			database \
+			rasa-init \
 			status
 
 .PHONY: kill # Kill all available containers.
@@ -107,24 +108,21 @@ status:
 	docker volume ls
 	@echo "=================================================="
 
+.PHONY: rasa-init # Rasa init.
+rasa-init:
+	docker exec -it rasa sh -c 'rasa init'
+
 .PHONY: php # Open php container terminal.
 php:
 	docker exec -it php sh
 
-.PHONY: mysql # Open mysql container terminal.
-mysql:
-	docker exec -it mysql sh
-
-.PHONY: backup # Backup database.
+.PHONY: backup # Backup postgres database.
 backup:
-	- mkdir -m 0777 "$(PWD)/docker/database/dump"
-	chmod -R 0777 $(PWD)
-	docker exec mysql "/usr/bin/mysqldump" -u root --password="$(DB_ROOT_PASS)" $(DB_NAME) > "$(PWD)/docker/database/dump/$(DB_NAME)_dump.sql"
-	chmod -R 0777 $(PWD)
+	docker exec -it postgres sh -c 'pg_dump -Fc $(DB_NAME) -U $(DB_USER) | gzip > /opt/backups/$(DB_NAME).dump.gz'
 
 .PHONY: restore # Restore the latest database backup.
 restore:
-	cat "$(PWD)/docker/database/dump/$(DB_NAME)_dump.sql" | docker exec -i mysql "/usr/bin/mysql" -u root --password=$(DB_ROOT_PASS) $(DB_NAME)
+	docker exec -it postgres sh -c 'pg_restore -U $(DB_USER) -d $(DB_NAME) < /opt/backups/$(DB_NAME).dump'
 
 .PHONY: logs # Show logs for selected containers. Provide `NAME` variable with container name to show the last 50 logs.
 logs:
