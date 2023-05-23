@@ -118,11 +118,11 @@ php:
 
 .PHONY: backup # Backup postgres database.
 backup:
-	docker exec -it postgres sh -c 'pg_dump -Fc $(DB_NAME) -U $(DB_USER) | gzip > /opt/dump/$(DB_NAME).dump.gz'
+	docker exec -it postgres sh -c 'pg_dump -U $(DB_USER) $(DB_NAME) > /opt/dump/$(DB_NAME).sql'
 
 .PHONY: restore # Restore the latest database backup.
 restore:
-	docker exec -it postgres sh -c 'pg_restore -U $(DB_USER) -d $(DB_NAME) < /opt/dump/$(DB_NAME).dump'
+	docker exec -it postgres sh -c 'pg_restore -U $(DB_USER) --clean --if-exists -d $(DB_NAME) -W /opt/dump/$(DB_NAME).dump'
 
 .PHONY: logs # Show logs for selected containers. Provide `NAME` variable with container name to show the last 50 logs.
 logs:
