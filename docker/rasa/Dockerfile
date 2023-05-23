@@ -1,5 +1,5 @@
 # rasa image latest full.
-FROM rasa/rasa:3.5.8-full
+FROM rasa/rasa:3.5.8
 
 # dockerfile maintainer name, surname and contact email.
 MAINTAINER Aleksandar Rakić <aleksandar.rakic@yahoo.com>
@@ -11,7 +11,7 @@ USER root
 ENV PATH="/opt/venv/bin:$PATH"
 
 # install required packages.
-RUN pip3 install rasa[spacy]
+RUN pip install rasa[spacy]
 
 # spacy link.
 RUN python -m spacy download hr_core_news_lg && \

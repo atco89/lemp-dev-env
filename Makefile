@@ -24,7 +24,10 @@ phpinfo:
 
 .PHONY: prod # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
 prod:
-	$(MAKE) start && cd $(PWD)/src && $(MAKE) nlu && cd $(PWD)
+	rm -rf $(PWD)/docker/database/backup
+	rm -rf $(PWD)/rasa
+	$(MAKE) start
+	cd $(PWD)/src && $(MAKE) nlu && cd $(PWD)
 
 .PHONY: start # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
 start:
@@ -33,9 +36,6 @@ start:
 			certs \
 			install \
 			htpasswd \
-			wait DURATION=30 \
-			database \
-			rasa-init \
 			status
 
 .PHONY: kill # Kill all available containers.

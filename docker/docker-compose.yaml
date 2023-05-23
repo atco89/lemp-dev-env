@@ -65,7 +65,7 @@ services:
   rasa:
     container_name: rasa
     restart: unless-stopped
-    image: rasa/rasa:3.5.8
+    image: rasa/rasa:latest-full
     volumes:
       - ./../rasa:/app
     ports:
@@ -76,6 +76,8 @@ services:
     command:
       - run
       - --enable-api
+      - --cors
+      - "*"
     depends_on:
       - postgres
     links:
