@@ -4,7 +4,7 @@ services:
   nginx:
     container_name: nginx
     restart: unless-stopped
-    image: nginx:latest
+    image: nginx:1.24-alpine
     volumes:
       - ./web/nginx/ssl/certs:/etc/nginx/ssl
       - ./web/nginx/config/fragments:/etc/nginx/fragments
@@ -20,7 +20,6 @@ services:
       - adminer
       - rasa
       - rasa-sdk
-      - rasa-duckling
   php:
     container_name: php
     restart: unless-stopped
@@ -70,12 +69,14 @@ services:
       - ./../rasa:/app
     ports:
       - '5005:5005'
-      - '5010:5010'
     environment:
       SQLALCHEMY_SILENCE_UBER_WARNING: 1
     command:
       - run
       - --enable-api
+      - --debug
+      - --log-file
+      - out.log
       - --cors
       - "*"
     depends_on:
@@ -94,13 +95,3 @@ services:
       - rasa
     links:
       - rasa
-  rasa-duckling:
-    container_name: rasa-duckling
-    restart: unless-stopped
-    image: rasa/duckling:latest
-    ports:
-      - '8000:8000'
-    depends_on:
-      - rasa-sdk
-    links:
-      - rasa-sdk

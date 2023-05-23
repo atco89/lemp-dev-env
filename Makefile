@@ -22,12 +22,21 @@ phpinfo:
 	echo "<?php\n\nphpinfo();" >> "$(PUBLIC_DIR_PATH)/index.php"
 	chmod -R 0777 $(PWD)
 
-.PHONY: prod # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
-prod:
+.PHONY: setup # Setup project from scratch.
+setup:
 	rm -rf $(PWD)/docker/database/backup
 	rm -rf $(PWD)/rasa
-	$(MAKE) start
-	cd $(PWD)/src && $(MAKE) nlu && cd $(PWD)
+	$(MAKE) start \
+			wait DURATION=25 \
+ 			database \
+ 			restore \
+ 			rasa
+	cd $(PWD)/src && $(MAKE) generate && cd $(PWD)
+	$(MAKE) status
+
+.PHONY: rasa # Initialize rasa
+rasa:
+	docker exec -it rasa sh -c 'rasa init'
 
 .PHONY: start # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
 start:
@@ -35,8 +44,7 @@ start:
 			clean \
 			certs \
 			install \
-			htpasswd \
-			status
+			htpasswd
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -108,10 +116,6 @@ status:
 	docker volume ls
 	@echo "=================================================="
 
-.PHONY: rasa-init # Rasa init.
-rasa-init:
-	docker exec -it rasa sh -c 'rasa init'
-
 .PHONY: php # Open php container terminal.
 php:
 	docker exec -it php sh
@@ -127,3 +131,7 @@ restore:
 .PHONY: logs # Show logs for selected containers. Provide `NAME` variable with container name to show the last 50 logs.
 logs:
 	docker logs $(NAME) --tail=50
+
+.PHONY: nconf # Reload new nginx configuration.
+nconf:
+	docker exec -it nginx sh -c 'nginx -s reload'
