@@ -64,7 +64,9 @@ services:
   rasa:
     container_name: rasa
     restart: unless-stopped
-    image: rasa/rasa:latest-full
+    build:
+      context: ./../
+      dockerfile: ./docker/rasa/Dockerfile
     volumes:
       - ./../rasa:/app
     ports:
