@@ -135,3 +135,10 @@ logs:
 .PHONY: nconf # Reload new nginx configuration.
 nconf:
 	docker exec -it nginx sh -c 'nginx -s reload'
+
+.PHONY: backup-sql # Backup database SQL file into /opt/backup.
+backup-sql:
+	- mkdir -p /opt/backup/`date +'%Y%m%d'`
+	$(MAKE) backup
+	chmod -R 0777 $(PWD)
+	cp $(PWD)/docker/database/dump/$(DB_NAME).sql /opt/backup/`date +'%Y%m%d'`/$(DB_NAME).sql
