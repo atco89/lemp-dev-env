@@ -15,9 +15,10 @@ RUN pip install rasa[spacy]
 
 # spacy link.
 RUN python -m spacy download hr_core_news_lg
+RUN python -m spacy link hr_core_news_lg hr
 
 # set user rasa.
 USER rasa
 
-# expose ports 5005 to outside world.
+# expose port 5005 to outside world.
 EXPOSE 5005
