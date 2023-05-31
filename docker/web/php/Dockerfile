@@ -57,10 +57,6 @@ RUN docker-php-ext-install opcache \
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
     && mkdir -p /var/www/.composer
 
-# download and install symfony cli.
-RUN curl -1sLf 'https://dl.cloudsmith.io/public/symfony/stable/setup.alpine.sh' | bash \
-    && apk add symfony-cli
-
 # copy files from source directory.
 COPY ./docker/web/php/php.ini /usr/local/etc/php/conf.d/php.ini
 COPY ./docker/web/php/xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
