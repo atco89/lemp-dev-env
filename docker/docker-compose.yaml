@@ -1,6 +1,10 @@
 version: '3'
 
 services:
+  ###########################
+  # N G I N X               #
+  ###########################
+
   nginx:
     container_name: nginx
     restart: unless-stopped
@@ -20,6 +24,11 @@ services:
       - adminer
       - rasa
       - rasa-sdk
+
+  ###########################
+  # P H P 8.2 - A L P I N E #
+  ###########################
+
   php:
     container_name: php
     restart: unless-stopped
@@ -32,6 +41,11 @@ services:
       - postgres
     links:
       - postgres
+
+  ###########################
+  # D A T A B A S E         #
+  ###########################
+
   postgres:
     container_name: postgres
     restart: unless-stopped
@@ -41,6 +55,7 @@ services:
     volumes:
       - ./database/backup:/var/lib/postgresql/data
       - ./database/dump:/opt/dump
+      - ./database/scripts:/opt/scripts
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -50,10 +65,13 @@ services:
       interval: 30s
       timeout: 60s
       retries: 5
+
   adminer:
     container_name: adminer
     restart: unless-stopped
     image: adminer:latest
+    ports:
+      - '8080:8080'
     environment:
       ADMINER_DEFAULT_SERVER: postgres
       ADMINER_DEFAULT_DB_HOST: postgres
@@ -61,6 +79,11 @@ services:
       ADMINER_DESIGN: 'pepa-linha'
     depends_on:
       - postgres
+
+  ###########################
+  # R A S A                 #
+  ###########################
+
   rasa:
     container_name: rasa
     restart: unless-stopped
@@ -85,10 +108,13 @@ services:
       - postgres
     links:
       - postgres
+
   rasa-sdk:
     container_name: rasa-sdk
     restart: unless-stopped
-    image: rasa/rasa-sdk:latest
+    build:
+      context: ./../
+      dockerfile: ./docker/rasa-sdk/Dockerfile
     ports:
       - '5055:5055'
     volumes:

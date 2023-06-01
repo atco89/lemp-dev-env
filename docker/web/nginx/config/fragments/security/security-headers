@@ -15,5 +15,4 @@ add_header Strict-Transport-Security "max-age=31536000" always;
 
 location ~* \.(eot|ttf|woff|woff2)$ {
     add_header Access-Control-Allow-Origin *;
-    add_header X-Frame-Options "Allow-From https://www.mgsi.gov.rs/";
 }

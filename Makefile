@@ -142,3 +142,10 @@ backup-sql:
 	$(MAKE) backup
 	chmod -R 0777 $(PWD)
 	cp $(PWD)/docker/database/dump/$(DB_NAME).sql /opt/backup/`date +'%Y%m%d'`/$(DB_NAME).sql
+
+download:
+	rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql
+	scp -i /home/aleksandar/Downloads/admin.mgsi.chatbot.pem admin@ec2-3-70-172-77.eu-central-1.compute.amazonaws.com:/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql $(PWD)/docker/database/dump/chat_mgsi.sql
+
+train:
+	docker exec -it rasa sh -c 'rasa train && rasa run --enable-api --debug --log-file out.log --cors "*" actions'
