@@ -7,21 +7,6 @@ PUBLIC_DIR_PATH := $(PWD)/src/public
 help:
 	@grep '^.PHONY: .* #' Makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1:\t\t\t\t\t\2/' | column -ts "$$(printf '\t')"
 
-.PHONY: init # Clean all, generate SSL certificates, install containers, setup git user, add phpinfo file and show status.
-init:
-	$(MAKE) start phpinfo
-
-.PHONY: phpinfo # Create public directory inside source directory with index.php file which as an output gives information's about php version installed.
-phpinfo:
-	if [ -d $(PUBLIC_DIR_PATH) ]; \
-		then rm -rf $(PUBLIC_DIR_PATH); \
-	fi
-
-	chmod -R 0777 $(PWD)
-	mkdir -p -m 0777 $(PUBLIC_DIR_PATH)
-	echo "<?php\n\nphpinfo();" >> "$(PUBLIC_DIR_PATH)/index.php"
-	chmod -R 0777 $(PWD)
-
 .PHONY: setup # Setup project from scratch.
 setup:
 	rm -rf $(PWD)/docker/database/backup
@@ -34,17 +19,11 @@ setup:
 	cd $(PWD)/src && $(MAKE) generate && cd $(PWD)
 	$(MAKE) status
 
-.PHONY: rasa # Initialize rasa
-rasa:
-	docker exec -it rasa sh -c 'rasa init'
-
 .PHONY: start # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
 start:
 	$(MAKE) kill \
 			clean \
-			certs \
-			install \
-			htpasswd
+			install
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -94,17 +73,13 @@ database:
 wait:
 	sleep $(DURATION)
 
+.PHONY: rasa # Initialize rasa
+rasa:
+	docker exec -it rasa sh -c 'rasa init'
+
 .PHONY: push # Push all changes on current branch.
 push:
-	$(MAKE) git
-	git add $(PWD)
-	git commit -m "[`date +'%Y-%m-%d'`] - work in progress."
-	git push
-
-.PHONY: git # Configure git user name and email.
-git:
-	git config user.name $(GIT_NAME)
-	git config user.email $(GIT_EMAIL)
+	$(PWD)/bash/git-push.sh
 
 .PHONY: status # List all images, volumes and containers status.
 status:
@@ -146,6 +121,3 @@ backup-sql:
 download:
 	rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql
 	scp -i /home/aleksandar/Downloads/admin.mgsi.chatbot.pem admin@ec2-3-70-172-77.eu-central-1.compute.amazonaws.com:/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql $(PWD)/docker/database/dump/chat_mgsi.sql
-
-train:
-	docker exec -it rasa sh -c 'rasa train && rasa run --enable-api --debug --log-file out.log --cors "*" actions'
