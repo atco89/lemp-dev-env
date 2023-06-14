@@ -14,7 +14,6 @@ setup:
 	$(MAKE) start \
 			wait DURATION=25 \
  			database \
- 			restore \
  			rasa
 	cd $(PWD)/src && $(MAKE) generate && cd $(PWD)
 	$(MAKE) status
