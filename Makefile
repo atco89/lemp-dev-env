@@ -125,19 +125,25 @@ download:
 	rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql
 	scp -i /home/aleksandar/Downloads/admin.mgsi.chatbot.pem admin@ec2-3-70-172-77.eu-central-1.compute.amazonaws.com:/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql $(PWD)/docker/database/dump/chat_mgsi.sql
 
-.PHONY: backup-sql # Deploy and run application.
+.PHONY: deploy # Deploy and run application.
 deploy:
 	chmod -R 0777 $(PWD)
 	cd $(PWD)/src && git stash && git pull && git stash clear
 	chmod -R 0777 $(PWD)
 
-	$(MAKE) kill clean
+	$(MAKE) kill \
+			clean
+
 	- rm -rf ./docker/database/backup
-	$(MAKE) install
-	sleep 25
-	$(MAKE) database
+
+	$(MAKE) install \
+			wait DURATION=25 \
+			database
 
 	chmod -R 0777 $(PWD)
-	cd ./src && $(MAKE) generate && chmod -R 0777 $(PWD) && $(MAKE) train
-	chmod -R 0777 $(PWD)
-	$(MAKE) kill clean install
+	cd $(PWD)/src \ && $(MAKE) generate \
+ 							   train
+
+	$(MAKE) kill \
+			clean \
+			install
