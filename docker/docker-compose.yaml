@@ -111,7 +111,7 @@ services:
     restart: unless-stopped
     build:
       context: ./../
-      dockerfile: ./docker/web/rasa-sdk/Dockerfile
+      dockerfile: ./docker/rasa-sdk/Dockerfile
     ports:
       - '5055:5055'
     volumes:
