@@ -9,23 +9,28 @@ help:
 
 .PHONY: setup # Setup project from scratch.
 setup:
-	rm -rf $(PWD)/docker/database/backup
-	rm -rf $(PWD)/rasa
-	$(MAKE) start \
-			wait DURATION=25 \
- 			database \
- 			rasa
-	cd $(PWD)/src && $(MAKE) generate && cd $(PWD)
-	$(MAKE) status
+	chmod -R 0777 $(PWD)
+	cd $(PWD)/src && git stash && git pull && git stash clear
+	chmod -R 0777 $(PWD)
 
-.PHONY: start # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
-start:
-	rm -rf $(PWD)/docker/database/backup
+	$(MAKE) kill \
+			clean
+
+	- rm -rf $(PWD)/docker/database/backup
+	- rm -rf $(PWD)/rasa
+
+	$(MAKE) install \
+			wait DURATION=25 \
+			database \
+			rasa
+
+	chmod -R 0777 $(PWD)
+	cd $(PWD)/src && $(MAKE) generate train
+	chmod -R 0777 $(PWD)
+
 	$(MAKE) kill \
 			clean \
 			install
-			wait DURATION=25 \
-			database
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -123,25 +128,4 @@ backup-sql:
 .PHONY: download # Download database backup.
 download:
 	rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql
-	scp -i /home/aleksandar/Downloads/admin.mgsi.chatbot.pem admin@ec2-3-70-172-77.eu-central-1.compute.amazonaws.com:/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql $(PWD)/docker/database/dump/chat_mgsi.sql
-
-.PHONY: deploy # Deploy and run application.
-deploy:
-	chmod -R 0777 $(PWD)
-	cd $(PWD)/src && git stash && git pull && git stash clear
-	chmod -R 0777 $(PWD)
-
-	$(MAKE) kill clean
-
-	- rm -rf $(PWD)/docker/database/backup
-	- rm -rf $(PWD)/rasa
-
-	$(MAKE) install \
-			wait DURATION=25 \
-			database \
-			rasa
-
-	chmod -R 0777 $(PWD)
-	cd $(PWD)/src && $(MAKE) generate train
-
-	$(MAKE) kill clean install
+	scp -i $(AWS_SSH_KEY) $(AWS_USER)@$(AWS_HOST):/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql $(PWD)/docker/database/dump/chat_mgsi.sql
