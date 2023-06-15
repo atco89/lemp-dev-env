@@ -109,7 +109,9 @@ services:
   rasa-sdk:
     container_name: rasa-sdk
     restart: unless-stopped
-    image: rasa/rasa-sdk:latest
+    build:
+      context: ./../
+      dockerfile: ./docker/web/rasa-sdk/Dockerfile
     ports:
       - '5055:5055'
     volumes:

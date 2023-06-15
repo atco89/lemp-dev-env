@@ -131,8 +131,7 @@ deploy:
 	cd $(PWD)/src && git stash && git pull && git stash clear
 	chmod -R 0777 $(PWD)
 
-	$(MAKE) kill \
-			clean
+	$(MAKE) kill clean
 
 	- rm -rf $(PWD)/docker/database/backup
 	- rm -rf $(PWD)/rasa
@@ -143,9 +142,6 @@ deploy:
 			rasa
 
 	chmod -R 0777 $(PWD)
-	cd $(PWD)/src \ && $(MAKE) generate \
- 							   train
+	cd $(PWD)/src && $(MAKE) generate train
 
-	$(MAKE) kill \
-			clean \
-			install
+	$(MAKE) kill clean install
