@@ -131,13 +131,13 @@ deploy:
 	cd $(PWD)/src && git stash && git pull && git stash clear
 	chmod -R 0777 $(PWD)
 
-	make kill clean
+	$(MAKE) kill clean
 	- rm -rf ./docker/database/backup
-	make install
+	$(MAKE) install
 	sleep 25
-	make database
+	$(MAKE) database
 
 	chmod -R 0777 $(PWD)
-	cd ./src && make generate && chmod -R 0777 $(PWD) && train
+	cd ./src && $(MAKE) generate && chmod -R 0777 $(PWD) && $(MAKE) train
 	chmod -R 0777 $(PWD)
-	make kill clean install
+	$(MAKE) kill clean install
