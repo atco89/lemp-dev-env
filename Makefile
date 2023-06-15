@@ -134,11 +134,13 @@ deploy:
 	$(MAKE) kill \
 			clean
 
-	- rm -rf ./docker/database/backup
+	- rm -rf $(PWD)/docker/database/backup
+	- rm -rf $(PWD)/rasa
 
 	$(MAKE) install \
 			wait DURATION=25 \
-			database
+			database \
+			rasa
 
 	chmod -R 0777 $(PWD)
 	cd $(PWD)/src \ && $(MAKE) generate \
