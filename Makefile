@@ -127,11 +127,17 @@ download:
 
 .PHONY: backup-sql # Deploy and run application.
 deploy:
+	chmod -R 0777 $(PWD)
 	cd $(PWD)/src && git stash && git pull && git stash clear
+	chmod -R 0777 $(PWD)
+
 	make kill clean
 	- rm -rf ./docker/database/backup
 	make install
-	wait DURATION=25
+	sleep 25
 	make database
-	cd ./src && make generate train
+
+	chmod -R 0777 $(PWD)
+	cd ./src && make generate && chmod -R 0777 $(PWD) && train
+	chmod -R 0777 $(PWD)
 	make kill clean install
