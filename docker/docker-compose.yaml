@@ -86,9 +86,7 @@ services:
   rasa:
     container_name: rasa
     restart: unless-stopped
-    build:
-      context: ./../
-      dockerfile: ./docker/rasa/Dockerfile
+    image: rasa/rasa:latest-full
     volumes:
       - ./../rasa:/app
     ports:
@@ -111,9 +109,7 @@ services:
   rasa-sdk:
     container_name: rasa-sdk
     restart: unless-stopped
-    build:
-      context: ./../
-      dockerfile: ./docker/rasa-sdk/Dockerfile
+    image: rasa/rasa-sdk:latest
     ports:
       - '5055:5055'
     volumes:

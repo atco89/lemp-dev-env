@@ -20,9 +20,12 @@ setup:
 
 .PHONY: start # Clean all, generate SSL certificates, install containers, setup git user, setup password and database.
 start:
+	rm -rf $(PWD)/docker/database/backup
 	$(MAKE) kill \
 			clean \
 			install
+			wait DURATION=25 \
+			database
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -117,6 +120,18 @@ backup-sql:
 	chmod -R 0777 $(PWD)
 	cp $(PWD)/docker/database/dump/$(DB_NAME).sql /opt/backup/`date +'%Y%m%d'`/$(DB_NAME).sql
 
+.PHONY: download # Download database backup.
 download:
 	rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql
 	scp -i /home/aleksandar/Downloads/admin.mgsi.chatbot.pem admin@ec2-3-70-172-77.eu-central-1.compute.amazonaws.com:/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql $(PWD)/docker/database/dump/chat_mgsi.sql
+
+.PHONY: backup-sql # Deploy and run application.
+deploy:
+	cd $(PWD)/src && git stash && git pull && git stash clear
+	make kill clean
+	- rm -rf ./docker/database/backup
+	make install
+	wait DURATION=25
+	make database
+	cd ./src && make generate train
+	make kill clean install
