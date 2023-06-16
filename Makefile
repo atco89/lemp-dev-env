@@ -9,6 +9,7 @@ help:
 
 .PHONY: start # Clean all, generate SSL certificates, install containers, setup git user and show status.
 start:
+	- rm -rf $(PWD)/docker/database/backup
 	$(MAKE) kill clean certs install htpasswd
 
 .PHONY: kill # Kill all available containers.
@@ -53,15 +54,7 @@ htpasswd:
 
 .PHONY: push # Push all changes on current branch.
 push:
-	$(MAKE) git
-	git add $(PWD)
-	git commit -m "[`date +'%Y-%m-%d'`] - work in progress."
-	git push
-
-.PHONY: git # Configure git user name and email.
-git:
-	git config user.name $(GIT_NAME)
-	git config user.email $(GIT_EMAIL)
+	$(PWD)/git-push.sh
 
 .PHONY: status # List all images, volumes and containers status.
 status:
@@ -96,9 +89,40 @@ restore:
 logs:
 	docker logs $(NAME) --tail=50
 
-symfony:
+.PHONY: dev # Setup clean dev environment.
+dev:
+	$(MAKE) clear-cache \
+			kill \
+			clean
+
+	- rm -rf $(PWD)/docker/database/backup
+	- rm -rf $(PWD)/src/migrations/*.php
+
+	$(MAKE) certs \
+			install \
+			htpasswd
+
+	sleep 30
+
+	$(MAKE) database \
+ 			refresh-rates \
+ 			status
+
+.PHONY: clear-cache # Clear project cache.
+clear-cache:
 	chmod -R 0777 $(PWD)
-	docker exec -it php sh -c 'git config --global user.email $(GIT_EMAIL) \
-							   && git config --global user.name $(GIT_NAME) \
-							   && symfony new /var/www/html --version="6.2.*" --webapp --php=8.2'
+	docker exec -it php sh -c 'rm -rf ./var/cache \
+							   && php bin/console cache:clear \
+							   && composer dump-autoload -o'
 	chmod -R 0777 $(PWD)
+
+.PHONY: database # Setup database tables and initial data.
+database:
+	chmod -R 0777 $(PWD)
+	docker exec -it php sh -c 'php bin/console make:migration \
+							   && php bin/console doctrine:migrations:migrate \
+							   && php bin/console doctrine:fixtures:load'
+	chmod -R 0777 $(PWD)
+
+refresh-rates:
+	docker exec -it php sh -c 'php bin/console app:rates:refresh'
