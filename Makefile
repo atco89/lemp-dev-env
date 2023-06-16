@@ -54,7 +54,7 @@ htpasswd:
 
 .PHONY: push # Push all changes on current branch.
 push:
-	$(PWD)/git-push.sh
+	$(PWD)/bash/git-push.sh
 
 .PHONY: status # List all images, volumes and containers status.
 status:
@@ -105,7 +105,7 @@ dev:
 	sleep 30
 
 	$(MAKE) database \
- 			refresh-rates \
+ 			jobs \
  			status
 
 .PHONY: clear-cache # Clear project cache.
@@ -124,5 +124,5 @@ database:
 							   && php bin/console doctrine:fixtures:load'
 	chmod -R 0777 $(PWD)
 
-refresh-rates:
-	docker exec -it php sh -c 'php bin/console app:rates:refresh'
+jobs:
+	docker exec -it php sh -c './jobs.sh'
