@@ -124,5 +124,10 @@ database:
 							   && php bin/console doctrine:fixtures:load'
 	chmod -R 0777 $(PWD)
 
+.PHONY: jobs # Run all jobs once.
 jobs:
 	docker exec -it php sh -c './jobs.sh'
+
+.PHONY: ssh # SSH on AWS EC2.
+ssh:
+	ssh -i $(AWS_CERT) $(AWS_USER)@$(AWS_HOST)
