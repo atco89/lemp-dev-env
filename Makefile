@@ -10,7 +10,9 @@ help:
 .PHONY: setup # Setup project from scratch.
 setup:
 	chmod -R 0777 $(PWD)
-	cd $(PWD)/src && git stash && git pull && git stash clear
+	if [ $(MODE) == "prod" ]; \
+		then cd $(PWD)/src && git stash && git pull && git stash clear; \
+	fi
 	chmod -R 0777 $(PWD)
 
 	$(MAKE) kill \
@@ -25,7 +27,10 @@ setup:
 			rasa
 
 	chmod -R 0777 $(PWD)
-	cd $(PWD)/src && $(MAKE) generate train
+
+	$(MAKE) -C "$(PWD)/src" generate \
+							train
+
 	chmod -R 0777 $(PWD)
 
 	$(MAKE) kill \
@@ -42,10 +47,7 @@ clean:
 
 .PHONY: certs # Generate SSL certificates.
 certs:
-	if [ -d "$(SSL_DIR)/certs" ]; \
-		then rm -rf "$(SSL_DIR)/certs"; \
-	fi
-
+	- rm -rf "$(SSL_DIR)/certs"
 	mkdir -m 0777 "$(SSL_DIR)/certs"
 
 	openssl req \
@@ -86,7 +88,7 @@ rasa:
 
 .PHONY: push # Push all changes on current branch.
 push:
-	$(PWD)/bash/git-push.sh
+	$(PWD)/bash/push.sh
 
 .PHONY: status # List all images, volumes and containers status.
 status:

@@ -8,15 +8,15 @@ services:
   nginx:
     container_name: nginx
     restart: unless-stopped
-    image: nginx:1.24-alpine
+    image: nginx:1.25.1-alpine
     volumes:
+      - ./../src:/var/www/html
       - ./web/nginx/ssl/certs:/etc/nginx/ssl
       - ./web/nginx/config/fragments:/etc/nginx/fragments
       - ./web/nginx/config/nginx.conf:/etc/nginx/nginx.conf
       - ./web/log/nginx:/var/log/nginx
-      - ./../src:/var/www/html
     ports:
-      - '80:80'
+      - "80:80"
     depends_on:
       - postgres
       - php
@@ -50,7 +50,7 @@ services:
     restart: unless-stopped
     image: postgres:15.3-alpine
     ports:
-      - '2345:5432'
+      - "2345:5432"
     volumes:
       - ./database/backup:/var/lib/postgresql/data
       - ./database/dump:/opt/dump
@@ -64,18 +64,15 @@ services:
       interval: 30s
       timeout: 60s
       retries: 5
-
   adminer:
     container_name: adminer
     restart: unless-stopped
     image: adminer:latest
-    ports:
-      - '8080:8080'
     environment:
       ADMINER_DEFAULT_SERVER: postgres
       ADMINER_DEFAULT_DB_HOST: postgres
       ADMINER_DEFAULT_DB_NAME: ${DB_NAME}
-      ADMINER_DESIGN: 'pepa-linha'
+      ADMINER_DESIGN: "pepa-linha"
     depends_on:
       - postgres
 
@@ -86,11 +83,13 @@ services:
   rasa:
     container_name: rasa
     restart: unless-stopped
-    image: rasa/rasa:latest-full
+    build:
+      context: ./../
+      dockerfile: ./docker/rasa/Dockerfile
     volumes:
       - ./../rasa:/app
     ports:
-      - '5005:5005'
+      - "5005:5005"
     environment:
       SQLALCHEMY_SILENCE_UBER_WARNING: 1
     command:
@@ -101,21 +100,16 @@ services:
       - out.log
       - --cors
       - "*"
-    depends_on:
-      - postgres
-    links:
-      - postgres
-
   rasa-sdk:
     container_name: rasa-sdk
     restart: unless-stopped
     build:
       context: ./../
       dockerfile: ./docker/rasa-sdk/Dockerfile
-    ports:
-      - '5055:5055'
     volumes:
       - ./../rasa/actions:/app/actions
+    ports:
+      - "5055:5055"
     depends_on:
       - rasa
     links:

@@ -1,2 +1,7 @@
-.gitignore
-README.md
+/src/bash/push.sh
+/src/.editorconfig
+/src/.env.example
+/src/.gitattributes
+/src/.gitignore
+/src/Makefile
+/src/README.md
