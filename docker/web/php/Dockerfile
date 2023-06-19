@@ -1,5 +1,5 @@
-# PHP image with version 8.2.3 FPM on alpine 3.17. distribution.
-FROM php:8.2.3-fpm-alpine3.17
+# PHP image with version 8.2 FPM.
+FROM php:8.2-fpm-alpine
 
 # dockerfile maintainer name, surname and contact email.
 MAINTAINER Aleksandar Rakić <aleksandar.rakic@yahoo.com>

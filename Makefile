@@ -21,29 +21,26 @@ setup:
 	- rm -rf $(PWD)/docker/database/backup
 	- rm -rf $(PWD)/rasa
 
-	$(MAKE) install \
-			wait DURATION=25 \
+	$(MAKE) certs \
+			install \
+			wait DURATION=30 \
 			database \
-			rasa
-
-	chmod -R 0777 $(PWD)
-
-	$(MAKE) -C "$(PWD)/src" generate \
-							train
-
-	chmod -R 0777 $(PWD)
-
-	$(MAKE) kill \
+			rasa \
+			generate \
+			train \
+			kill \
 			clean \
 			install
+
+	chmod -R 0777 $(PWD)
 
 .PHONY: kill # Kill all available containers.
 kill:
 	- docker kill $$(docker ps -q)
 
-.PHONY: clean # Removes all object files, backup files, and other unnecessary files still remaining after compilation has finished.
+.PHONY: clean # Clean all container, images and volumes.
 clean:
-	docker system prune -a -f --volumes
+	- docker system prune -a -f --volumes
 
 .PHONY: certs # Generate SSL certificates.
 certs:
@@ -51,14 +48,14 @@ certs:
 	mkdir -m 0777 "$(SSL_DIR)/certs"
 
 	openssl req \
-		-utf8 \
-		-x509 \
-		-nodes \
-		-days 365 \
-		-newkey rsa:4096 \
-		-keyout "$(SSL_DIR)/certs/server.key" \
-		-out "$(SSL_DIR)/certs/server.crt" \
-		-config "$(SSL_DIR)/openssl.cnf"
+			-utf8 \
+			-x509 \
+			-nodes \
+			-days 365 \
+			-newkey rsa:4096 \
+			-keyout "$(SSL_DIR)/certs/server.key" \
+			-out "$(SSL_DIR)/certs/server.crt" \
+			-config "$(SSL_DIR)/openssl.cnf"
 
 	chmod -R 0777 $(PWD)
 
@@ -70,13 +67,13 @@ install:
 
 .PHONY: htpasswd # Generate htpasswd file with defined user and password.
 htpasswd:
-	htpasswd -cbB "$(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
+	htpasswd -cbB $(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd $(HTPASS_USER) $(HTPASS_PASS)
 
 .PHONY: database # Install database.
 database:
 	docker exec -it php sh -c 'php artisan migrate:install \
-								&& php artisan migrate:fresh \
-								&& php artisan db:seed'
+							   && php artisan migrate:fresh \
+							   && php artisan db:seed'
 
 .PHONY: wait # Timeout execution duration is passed with param DURATION=100.
 wait:
@@ -131,3 +128,34 @@ backup-sql:
 download:
 	rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql
 	scp -i $(AWS_SSH_KEY) $(AWS_USER)@$(AWS_HOST):/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql $(PWD)/docker/database/dump/chat_mgsi.sql
+
+.PHONY: generate # Generate RASA .yml files.
+generate:
+	chmod -R 0777 $(PWD)
+
+	- rm -rf $(PWD)/rasa/models/*.tar.gz
+	- rm -rf $(PWD)/src/storage/rasa/data/*.yml
+	- rm -rf $(PWD)/src/storage/rasa/domain.yml
+
+	curl -X GET --insecure https://localhost/generate/nlu
+
+	cp -rf $(PWD)/src/storage/rasa/data/nlu.yml			$(PWD)/rasa/data/nlu.yml
+	cp -rf $(PWD)/src/storage/rasa/data/rules.yml		$(PWD)/rasa/data/rules.yml
+	cp -rf $(PWD)/src/storage/rasa/data/stories.yml		$(PWD)/rasa/data/stories.yml
+
+	cp -rf $(PWD)/src/storage/rasa/config.yml			$(PWD)/rasa/config.yml
+	cp -rf $(PWD)/src/storage/rasa/credentials.yml		$(PWD)/rasa/credentials.yml
+	cp -rf $(PWD)/src/storage/rasa/domain.yml			$(PWD)/rasa/domain.yml
+	cp -rf $(PWD)/src/storage/rasa/endpoints.yml		$(PWD)/rasa/endpoints.yml
+
+	cp -rf $(PWD)/src/storage/rasa/actions/actions.py	$(PWD)/rasa/actions/actions.py
+
+	chmod -R 0777 $(PWD)
+
+.PHONY: train # Train RASA.
+train:
+	docker exec -it rasa sh -c 'rasa train'
+
+.PHONY: ssh # SSH on AWS.
+ssh:
+	ssh -i "$(PWD)/$(AWS_SSH_KEY)" $(AWS_USER)@$(AWS_HOST)

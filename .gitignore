@@ -6,3 +6,4 @@
 /docker/web/nginx/ssl/certs
 /src/
 /rasa/
+/certs/
