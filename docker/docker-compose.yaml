@@ -19,8 +19,6 @@ services:
       - php
       - adminer
 
-
-
   php:
     container_name: php
     restart: unless-stopped
@@ -35,8 +33,6 @@ services:
       - mysql
     links:
       - mysql
-
-
 
   mysql:
     container_name: mysql
@@ -57,8 +53,6 @@ services:
       test: [ 'CMD', 'mysqladmin', 'ping', '-p ${DB_PASS}' ]
       retries: 3
       timeout: 5s
-
-
 
   adminer:
     container_name: adminer

@@ -28,7 +28,9 @@ RUN apk --update add \
     g++ \
     autoconf \
     make \
-    linux-headers
+    linux-headers \
+    nodejs \
+    npm
 
 # install pecl libraries.
 RUN pecl channel-update pecl.php.net \

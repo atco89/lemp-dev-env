@@ -7,6 +7,7 @@
 /docker/web/nginx/config/fragments/auth/.htpasswd
 /docker/web/nginx/ssl/certs
 /src/
+/src/public/build/
 
 !/docker/web/log/.keepme
 !/docker/database/scripts/.keepme

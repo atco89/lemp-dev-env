@@ -112,6 +112,7 @@ dev:
 clear-cache:
 	chmod -R 0777 $(PWD)
 	docker exec -it php sh -c 'rm -rf ./var/cache \
+							   && rm -rf ./public/build \
 							   && php bin/console cache:clear \
 							   && composer dump-autoload -o'
 	chmod -R 0777 $(PWD)
