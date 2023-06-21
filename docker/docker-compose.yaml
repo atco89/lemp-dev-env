@@ -4,7 +4,7 @@ services:
   nginx:
     container_name: nginx
     restart: unless-stopped
-    image: nginx:latest
+    image: nginx:1.25.1-alpine-slim
     volumes:
       - ./web/nginx/ssl/certs:/etc/nginx/ssl
       - ./web/nginx/config/fragments:/etc/nginx/fragments
@@ -37,7 +37,7 @@ services:
   mysql:
     container_name: mysql
     restart: unless-stopped
-    image: mysql:latest
+    image: mysql:8.0.32-debian
     volumes:
       - ./database/config/my.cnf:/etc/my.cnf
       - ./database/scripts:/docker-entrypoint-initdb.d
@@ -57,7 +57,7 @@ services:
   adminer:
     container_name: adminer
     restart: unless-stopped
-    image: adminer:latest
+    image: adminer:4.8.1-fastcgi
     environment:
       ADMINER_DEFAULT_SERVER: mysql
       ADMINER_DEFAULT_DB_HOST: mysql
