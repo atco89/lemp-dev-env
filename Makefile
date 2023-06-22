@@ -95,10 +95,10 @@ dev:
 			kill \
 			clean
 
-	- rm -rf $(pwd)/docker/database/backup
-	- rm -rf $(pwd)/docker/web/nginx/ssl/certs
-	- rm -rf $(pwd)/src/migrations/*.php
-	- rm -rf $(pwd)/src/public/build
+	- rm -rf $(PWD)/docker/database/backup
+	- rm -rf $(PWD)/docker/web/nginx/ssl/certs
+	- rm -rf $(PWD)/src/migrations/*.php
+	- rm -rf $(PWD)/src/public/build
 
 	$(MAKE) certs \
 			install \
