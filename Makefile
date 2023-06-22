@@ -95,11 +95,14 @@ dev:
 			kill \
 			clean
 
-	- rm -rf $(PWD)/docker/database/backup
-	- rm -rf $(PWD)/src/migrations/*.php
+	- rm -rf $(pwd)/docker/database/backup
+	- rm -rf $(pwd)/docker/web/nginx/ssl/certs
+	- rm -rf $(pwd)/src/migrations/*.php
+	- rm -rf $(pwd)/src/public/build
 
 	$(MAKE) certs \
 			install \
+			dependencies \
 			htpasswd
 
 	sleep 30
@@ -115,6 +118,12 @@ clear-cache:
 							   && rm -rf ./public/build \
 							   && php bin/console cache:clear \
 							   && composer dump-autoload -o'
+	chmod -R 0777 $(PWD)
+
+.PHONY: dependencies # Install all dependencies.
+dependencies:
+	chmod -R 0777 $(PWD)
+	docker exec -it php sh -c 'npm i && npm run dev && composer install'
 	chmod -R 0777 $(PWD)
 
 .PHONY: database # Setup database tables and initial data.
