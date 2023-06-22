@@ -3,6 +3,7 @@
 /docker/database/backup
 /docker/database/dump
 /docker/database/scripts
+/docker/jenkins/
 /docker/web/log
 /docker/web/nginx/config/fragments/auth/.htpasswd
 /docker/web/nginx/ssl/certs
