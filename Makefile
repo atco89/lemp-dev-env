@@ -7,10 +7,25 @@ PUBLIC_DIR_PATH := $(PWD)/src/public
 help:
 	@grep '^.PHONY: .* #' Makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1:\t\t\t\t\t\2/' | column -ts "$$(printf '\t')"
 
-.PHONY: start # Clean all, generate SSL certificates, install containers, setup git user and show status.
+.PHONY: dev # Clean all, generate SSL certificates, setup containers.
 start:
-	- rm -rf $(PWD)/docker/database/backup
-	$(MAKE) kill clean certs install htpasswd
+	- rm -rf $(PWD)/docker/database/backup \
+ 			 $(PWD)/docker/jenkins \
+ 			 $(PWD)/docker/web/log \
+ 			 $(PWD)/docker/web/nginx/ssl/certs \
+ 			 $(PWD)/src/migrations/*.php \
+ 			 $(PWD)/src/public/build \
+ 			 $(PWD)/src/var
+
+	$(MAKE) kill \
+			clean \
+			certs \
+			install \
+			dependencies \
+			htpasswd \
+			database \
+ 			jobs \
+ 			status
 
 .PHONY: kill # Kill all available containers.
 kill:
@@ -46,15 +61,30 @@ install:
 	chmod -R 0777 $(PWD)
 	docker-compose -f "$(PWD)/docker/docker-compose.yaml" --env-file "$(PWD)/docker/.env" up -d --build
 	chmod -R 0777 $(PWD)
+	sleep 30
+
+.PHONY: dependencies # Install all JS and PHP dependencies.
+dependencies:
+	chmod -R 0777 $(PWD)
+	docker exec -it php sh -c 'npm i && npm run dev && composer install'
+	chmod -R 0777 $(PWD)
 
 .PHONY: htpasswd # Generate htpasswd file with defined user and password.
 htpasswd:
 	- apt-get install apache2-utils
 	htpasswd -cbB "$(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
 
-.PHONY: push # Push all changes on current branch.
-push:
-	$(PWD)/bash/git-push.sh
+.PHONY: database # Setup database tables and initial data.
+database:
+	chmod -R 0777 $(PWD)
+	docker exec -it php sh -c 'php bin/console --no-interaction make:migration \
+							   && php bin/console --no-interaction doctrine:migrations:migrate \
+							   && php bin/console --no-interaction doctrine:fixtures:load'
+	chmod -R 0777 $(PWD)
+
+.PHONY: jobs # Run all jobs once.
+jobs:
+	docker exec -it php sh -c './jobs.sh'
 
 .PHONY: status # List all images, volumes and containers status.
 status:
@@ -65,6 +95,10 @@ status:
 	@echo "=================================================="
 	docker volume ls
 	@echo "=================================================="
+
+.PHONY: push # Push all changes on current branch.
+push:
+	$(PWD)/bash/push.sh
 
 .PHONY: php # Open php container terminal.
 php:
@@ -89,28 +123,6 @@ restore:
 logs:
 	docker logs $(NAME) --tail=50
 
-.PHONY: dev # Setup clean dev environment.
-dev:
-	$(MAKE) clear-cache \
-			kill \
-			clean
-
-	- rm -rf $(PWD)/docker/database/backup
-	- rm -rf $(PWD)/docker/web/nginx/ssl/certs
-	- rm -rf $(PWD)/src/migrations/*.php
-	- rm -rf $(PWD)/src/public/build
-
-	$(MAKE) certs \
-			install \
-			dependencies \
-			htpasswd
-
-	sleep 30
-
-	$(MAKE) database \
- 			jobs \
- 			status
-
 .PHONY: clear-cache # Clear project cache.
 clear-cache:
 	chmod -R 0777 $(PWD)
@@ -120,24 +132,10 @@ clear-cache:
 							   && composer dump-autoload -o'
 	chmod -R 0777 $(PWD)
 
-.PHONY: dependencies # Install all dependencies.
-dependencies:
-	chmod -R 0777 $(PWD)
-	docker exec -it php sh -c 'npm i && npm run dev && composer install'
-	chmod -R 0777 $(PWD)
-
-.PHONY: database # Setup database tables and initial data.
-database:
-	chmod -R 0777 $(PWD)
-	docker exec -it php sh -c 'php bin/console make:migration \
-							   && php bin/console doctrine:migrations:migrate \
-							   && php bin/console doctrine:fixtures:load'
-	chmod -R 0777 $(PWD)
-
-.PHONY: jobs # Run all jobs once.
-jobs:
-	docker exec -it php sh -c './jobs.sh'
-
 .PHONY: ssh # SSH on AWS EC2.
 ssh:
 	ssh -i $(AWS_CERT) $(AWS_USER)@$(AWS_HOST)
+
+.PHONY: r-ngx # Reload NGINX configuration.
+r-ngx:
+	docker exec -it nginx nginx -s reload

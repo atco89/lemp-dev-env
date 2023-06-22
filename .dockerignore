@@ -1,3 +1,4 @@
 .gitignore
 README.md
-src/git-push.sh
+src/push.sh
+src/Makefile
