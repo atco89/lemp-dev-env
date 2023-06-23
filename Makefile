@@ -19,7 +19,7 @@ start:
 
 	$(MAKE) kill \
 			clean \
-			certs \
+			ssl-certificates \
 			install \
 			dependencies \
 			htpasswd \
@@ -27,17 +27,17 @@ start:
  			jobs \
  			status
 
-.PHONY: kill # Kill all available containers.
+.PHONY: kill # Kills all containers.
 kill:
 	- docker kill $$(docker ps -q)
 
-.PHONY: clean # Removes all object files, backup files, and other unnecessary files still remaining after compilation has finished.
+.PHONY: clean # Remove all unused containers, networks, images (both dangling and unreferenced), and volumes.
 clean:
 	- docker volume rm $$(docker volume ls -q)
 	docker system prune -a -f --volumes
 
-.PHONY: certs # Generate SSL certificates.
-certs:
+.PHONY: ssl-certificates # Generate a self-signed SSL certificate using OpenSSL.
+ssl-certificates:
 	if [ -d "$(SSL_DIR)/certs" ]; \
 		then rm -rf "$(SSL_DIR)/certs"; \
 	fi
@@ -56,25 +56,25 @@ certs:
 
 	chmod -R 0777 $(PWD)
 
-.PHONY: install # Build containers.
+.PHONY: install # Builds, (re)creates, starts, and attaches to containers for a service.
 install:
 	chmod -R 0777 $(PWD)
-	docker-compose -f "$(PWD)/docker/docker-compose.yaml" --env-file "$(PWD)/docker/.env" up -d --build
+	docker-compose -f $(PWD)/docker/docker-compose.yaml --env-file $(PWD)/docker/.env up -d --build
 	chmod -R 0777 $(PWD)
 	sleep 30
 
-.PHONY: dependencies # Install all JS and PHP dependencies.
+.PHONY: dependencies # Install npm and composer packages.
 dependencies:
 	chmod -R 0777 $(PWD)
 	docker exec -it php sh -c 'npm i && npm run dev && composer install'
 	chmod -R 0777 $(PWD)
 
-.PHONY: htpasswd # Generate htpasswd file with defined user and password.
+.PHONY: htpasswd # Create the flat-files used to store usernames and password for basic authentication of HTTP users.
 htpasswd:
 	- apt-get install apache2-utils
-	htpasswd -cbB "$(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd" $(HTPASS_USER) $(HTPASS_PASS)
+	htpasswd -cbB $(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd $(HTPASS_USER) $(HTPASS_PASS)
 
-.PHONY: database # Setup database tables and initial data.
+.PHONY: database # Creates a new migration based on database changes. Execute a migration - the latest available version. Load data fixtures.
 database:
 	chmod -R 0777 $(PWD)
 	docker exec -it php sh -c 'php bin/console --no-interaction make:migration \
@@ -86,7 +86,7 @@ database:
 jobs:
 	docker exec -it php sh -c './jobs.sh'
 
-.PHONY: status # List all images, volumes and containers status.
+.PHONY: status # List containers, show all top level images, their repository and tags, and their size and volumes.
 status:
 	@echo "=================================================="
 	docker ps -a
