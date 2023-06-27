@@ -19,6 +19,8 @@ setup:
 			clean
 
 	- rm -rf $(PWD)/docker/database/backup
+	- rm -rf $(PWD)/docker/web/logs
+	- rm -rf $(PWD)/docker/web/nginx/ssl/certs
 	- rm -rf $(PWD)/rasa
 
 	$(MAKE) certs \
@@ -154,7 +156,14 @@ generate:
 
 .PHONY: train # Train RASA.
 train:
+	rm -rf $(PWD)/rasa/models/*.tar.gz
+	rm -rf $(PWD)/rasa/out.log
+	rm -rf $(PWD)/rasa/.rasa/cache
 	docker exec -it rasa sh -c 'rasa train'
+	docker-compose -f $(PWD)/docker/docker-compose.yaml restart rasa
+	sleep 120
+	clear
+	@echo "DONE!"
 
 .PHONY: ssh # SSH on AWS.
 ssh:
