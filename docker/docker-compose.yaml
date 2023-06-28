@@ -53,8 +53,8 @@ services:
       - "2345:5432"
     volumes:
       - ./database/backup:/var/lib/postgresql/data
-#      - ./database/dump:/opt/dump
-#      - ./database/scripts:/opt/scripts
+      - ./database/dump:/opt/dump
+      - ./database/scripts:/opt/scripts
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
