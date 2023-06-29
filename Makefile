@@ -61,7 +61,7 @@ certs:
 .PHONY: install # Build containers.
 install:
 	chmod -R 0777 $(PWD)
-	docker-compose -f "$(PWD)/docker/docker-compose.yaml" --env-file "$(PWD)/docker/.env" up -d --build
+	docker-compose -f "$(PWD)/docker/docker-compose.yaml" --env-file "$(PWD)/docker/.env" up -d --build --force-recreate
 	chmod -R 0777 $(PWD)
 
 .PHONY: htpasswd # Generate htpasswd file with defined user and password.
