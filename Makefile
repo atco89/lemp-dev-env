@@ -25,14 +25,11 @@ setup:
 
 	$(MAKE) certs \
 			install \
-			wait DURATION=30 \
+			wait DURATION=60 \
 			database \
 			rasa \
 			generate \
-			train \
-			kill \
-			clean \
-			install
+			train
 
 	chmod -R 0777 $(PWD)
 
