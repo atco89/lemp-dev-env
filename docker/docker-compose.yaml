@@ -100,6 +100,11 @@ services:
       - out.log
       - --cors
       - "*"
+    depends_on:
+      - php
+    links:
+      - php
+  
   rasa-sdk:
     container_name: rasa-sdk
     restart: unless-stopped

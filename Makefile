@@ -10,10 +10,6 @@ help:
 .PHONY: setup # Setup project from scratch.
 setup:
 	chmod -R 0777 $(PWD)
-	if [ $(MODE) == "prod" ]; \
-		then cd $(PWD)/src && git stash && git pull && git stash clear; \
-	fi
-	chmod -R 0777 $(PWD)
 
 	$(MAKE) kill \
 			clean
@@ -28,7 +24,6 @@ setup:
 			wait DURATION=60 \
 			database \
 			rasa \
-			generate \
 			train
 
 	chmod -R 0777 $(PWD)
@@ -61,7 +56,11 @@ certs:
 .PHONY: install # Build containers.
 install:
 	chmod -R 0777 $(PWD)
-	docker-compose -f "$(PWD)/docker/docker-compose.yaml" --env-file "$(PWD)/docker/.env" up -d --build --force-recreate
+	docker-compose -f "$(PWD)/docker/docker-compose.yaml" up \
+					--detach \
+					--env-file "$(PWD)/docker/.env" \
+					--force-recreate \
+					--build
 	chmod -R 0777 $(PWD)
 
 .PHONY: htpasswd # Generate htpasswd file with defined user and password.
@@ -128,13 +127,33 @@ download:
 	rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql
 	scp -i $(AWS_SSH_KEY) $(AWS_USER)@$(AWS_HOST):/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql $(PWD)/docker/database/dump/chat_mgsi.sql
 
+.PHONY: train # Train RASA.
+train:
+	- rm -f $(PWD)/stopwatch.txt
+
+	@echo `date +'%Y-%m-%d %H:%M:%S'` >> $(PWD)/stopwatch.txt
+
+	- rm -rf $(PWD)/rasa/models/*.tar.gz \
+			 $(PWD)/src/storage/rasa/data/*.yml \
+			 $(PWD)/src/storage/rasa/*.yml \
+			 $(PWD)/rasa/out.log \
+			 $(PWD)/rasa/.rasa/cache
+
+	$(MAKE) generate
+
+	export NUMEXPR_MAX_THREADS="24"
+
+	docker exec -it rasa sh -c 'rasa train'
+	docker-compose -f $(PWD)/docker/docker-compose.yaml restart rasa
+	docker exec -it rasa sh -c 'rasa run actions'
+
+	sleep 120
+
+	@echo `date +'%Y-%m-%d %H:%M:%S'` >> $(PWD)/stopwatch.txt
+
 .PHONY: generate # Generate RASA .yml files.
 generate:
 	chmod -R 0777 $(PWD)
-
-	- rm -rf $(PWD)/rasa/models/*.tar.gz
-	- rm -rf $(PWD)/src/storage/rasa/data/*.yml
-	- rm -rf $(PWD)/src/storage/rasa/domain.yml
 
 	curl -X GET --insecure https://localhost/generate/nlu
 
@@ -150,17 +169,6 @@ generate:
 	cp -rf $(PWD)/src/storage/rasa/actions/actions.py	$(PWD)/rasa/actions/actions.py
 
 	chmod -R 0777 $(PWD)
-
-.PHONY: train # Train RASA.
-train:
-	rm -rf $(PWD)/rasa/models/*.tar.gz
-	rm -rf $(PWD)/rasa/out.log
-	rm -rf $(PWD)/rasa/.rasa/cache
-	docker exec -it rasa sh -c 'rasa train'
-	docker-compose -f $(PWD)/docker/docker-compose.yaml restart rasa
-	sleep 120
-	clear
-	@echo "DONE!"
 
 .PHONY: ssh # SSH on AWS.
 ssh:
