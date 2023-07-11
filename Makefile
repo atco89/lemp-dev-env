@@ -141,7 +141,7 @@ status:
 
 .PHONY: push # Update GIT remote refs along with associated objects.
 push:
-	@if [ $(APP_ENV) = "DEV" ]; then \
+	@if [ $(APP_ENV) = "dev" ]; then \
 		$(PWD)/bash/push.sh; \
 	else \
 		echo "This command is intended for a DEV environment."; \
@@ -165,7 +165,7 @@ nginx:
 
 .PHONY: store-backup # Store backup database SQL file into /opt/backup.
 store-backup:
-	@if [ $(APP_ENV) = "PROD" ]; then \
+	@if [ $(APP_ENV) = "prod" ]; then \
 		- mkdir -p /opt/backup/`date +'%Y%m%d'`; \
         $(MAKE) backup; \
         chmod -R 0777 $(PWD); \
@@ -180,7 +180,7 @@ backup:
 
 .PHONY: download # Download the latest PostgreSQL database backup.
 download:
-	@if [ $(APP_ENV) = "DEV" ]; then \
+	@if [ $(APP_ENV) = "dev" ]; then \
   		- rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql; \
 		scp -i $(AWS_SSH_KEY) $(AWS_USER)@$(AWS_HOST):"/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql" \
 			   $(PWD)/docker/database/dump/chat_mgsi.sql; \
