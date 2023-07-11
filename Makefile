@@ -166,10 +166,10 @@ nginx:
 .PHONY: store-backup # Store backup database SQL file into /opt/backup.
 store-backup:
 	@if [ $(APP_ENV) = "PROD" ]; then \
-		- mkdir -p /opt/backup/`date +'%Y%m%d'` \
-        && $(MAKE) backup \
-        && chmod -R 0777 $(PWD) \
-        && cp $(PWD)/docker/database/dump/$(DB_NAME).sql /opt/backup/`date +'%Y%m%d'`/$(DB_NAME).sql;  \
+		- mkdir -p /opt/backup/`date +'%Y%m%d'`; \
+        $(MAKE) backup; \
+        chmod -R 0777 $(PWD); \
+        cp $(PWD)/docker/database/dump/$(DB_NAME).sql /opt/backup/`date +'%Y%m%d'`/$(DB_NAME).sql;  \
 	else \
 		echo "This command is intended for a `PROD` environment."; \
 	fi
@@ -181,6 +181,7 @@ backup:
 .PHONY: download # Download the latest PostgreSQL database backup.
 download:
 	@if [ $(APP_ENV) = "DEV" ]; then \
+  		- rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql; \
 		scp -i $(AWS_SSH_KEY) $(AWS_USER)@$(AWS_HOST):"/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql" \
 			   $(PWD)/docker/database/dump/chat_mgsi.sql; \
     else \
