@@ -7,24 +7,26 @@ PUBLIC_DIR_PATH := $(PWD)/src/public
 help:
 	@grep '^.PHONY: .* #' Makefile | sed 's/\.PHONY: \(.*\) # \(.*\)/\1:\t\t\t\t\t\2/' | column -ts "$$(printf '\t')"
 
-.PHONY: setup # Setup project from scratch.
-setup:
+.PHONY: start # Clean all, generate SSL certificates, setup containers.
+start:
 	chmod -R 0777 $(PWD)
 
 	$(MAKE) kill \
 			clean
 
-	- rm -rf $(PWD)/docker/database/backup
-	- rm -rf $(PWD)/docker/web/logs
-	- rm -rf $(PWD)/docker/web/nginx/ssl/certs
-	- rm -rf $(PWD)/rasa
+	- rm -rf $(PWD)/docker/database/backup \
+ 			 $(PWD)/docker/web/logs \
+ 			 $(PWD)/docker/web/nginx/ssl/certs \
+ 			 $(PWD)/rasa
 
 	$(MAKE) certs \
-			install \
-			wait DURATION=60 \
-			database \
-			rasa \
-			train
+			htpwd \
+			build \
+			pause PERIOD=60 \
+			migrate \
+			rasa-init \
+			train \
+			status
 
 	chmod -R 0777 $(PWD)
 
@@ -32,14 +34,18 @@ setup:
 kill:
 	- docker kill $$(docker ps -q)
 
-.PHONY: clean # Clean all container, images and volumes.
+.PHONY: clean # Remove all unused containers, networks, images (both dangling and unreferenced), and volumes.
 clean:
-	- docker system prune -a -f --volumes
+	- docker volume rm $$(docker volume ls -q)
+	docker system prune -a -f --volumes
 
-.PHONY: certs # Generate SSL certificates.
+.PHONY: certs # Generate a self-signed SSL certificate using OpenSSL.
 certs:
-	- rm -rf "$(SSL_DIR)/certs"
-	mkdir -m 0777 "$(SSL_DIR)/certs"
+	if [ -d $(SSL_DIR)/certs ]; \
+		then rm -rf $(SSL_DIR)/certs; \
+	fi
+
+	mkdir -m 0777 $(SSL_DIR)/certs
 
 	openssl req \
 			-utf8 \
@@ -47,111 +53,60 @@ certs:
 			-nodes \
 			-days 365 \
 			-newkey rsa:4096 \
-			-keyout "$(SSL_DIR)/certs/server.key" \
-			-out "$(SSL_DIR)/certs/server.crt" \
-			-config "$(SSL_DIR)/openssl.cnf"
+			-keyout $(SSL_DIR)/certs/server.key \
+			-out $(SSL_DIR)/certs/server.crt \
+			-config $(SSL_DIR)/openssl.cnf
 
 	chmod -R 0777 $(PWD)
 
-.PHONY: install # Build containers.
-install:
+.PHONY: build # Builds, (re)creates, starts, and attaches to containers for a service.
+build:
 	chmod -R 0777 $(PWD)
-	docker-compose -f "$(PWD)/docker/docker-compose.yaml" up \
-					--detach \
-					--env-file "$(PWD)/docker/.env" \
-					--force-recreate \
-					--build
+	docker-compose --file $(PWD)/docker/docker-compose.yaml \
+				   --env-file $(PWD)/docker/.env up \
+				   --detach \
+				   --quiet-pull \
+				   --force-recreate \
+				   --build
 	chmod -R 0777 $(PWD)
 
-.PHONY: htpasswd # Generate htpasswd file with defined user and password.
-htpasswd:
+.PHONY: htpwd # Create the flat-file used to store username and password for basic authentication of HTTP users.
+htpwd:
 	htpasswd -cbB $(PWD)/docker/web/nginx/config/fragments/auth/.htpasswd $(HTPASS_USER) $(HTPASS_PASS)
 
-.PHONY: database # Install database.
-database:
+.PHONY: migrate # Execute migrations - the latest available version. Load data fixtures.
+migrate:
 	docker exec -it php sh -c 'php artisan migrate:install \
 							   && php artisan migrate:fresh \
 							   && php artisan db:seed'
 
-.PHONY: wait # Timeout execution duration is passed with param DURATION=100.
-wait:
-	sleep $(DURATION)
+.PHONY: pause # Pause execution of shell scripts or commands for a given period.
+pause:
+	sleep $(PERIOD)
 
-.PHONY: rasa # Initialize rasa
-rasa:
+.PHONY: rasa # Creates a new project with example training data, actions, and config files.
+rasa-init:
 	docker exec -it rasa sh -c 'rasa init'
 
-.PHONY: push # Push all changes on current branch.
-push:
-	$(PWD)/bash/push.sh
-
-.PHONY: status # List all images, volumes and containers status.
-status:
-	@echo "=================================================="
-	docker ps -a
-	@echo "=================================================="
-	docker images
-	@echo "=================================================="
-	docker volume ls
-	@echo "=================================================="
-
-.PHONY: php # Open php container terminal.
-php:
-	docker exec -it php sh
-
-.PHONY: backup # Backup postgres database.
-backup:
-	docker exec -it postgres sh -c 'pg_dump -U $(DB_USER) $(DB_NAME) > /opt/dump/$(DB_NAME).sql'
-
-.PHONY: restore # Restore the latest database backup.
-restore:
-	docker exec -it postgres sh -c 'dropdb -f $(DB_NAME) && createdb $(DB_NAME) && psql -U $(DB_USER) $(DB_NAME) < /opt/dump/$(DB_NAME).sql'
-
-.PHONY: logs # Show logs for selected containers. Provide `NAME` variable with container name to show the last 50 logs.
-logs:
-	docker logs $(NAME) --tail=50
-
-.PHONY: nconf # Reload new nginx configuration.
-nconf:
-	docker exec -it nginx sh -c 'nginx -s reload'
-
-.PHONY: backup-sql # Backup database SQL file into /opt/backup.
-backup-sql:
-	- mkdir -p /opt/backup/`date +'%Y%m%d'`
-	$(MAKE) backup
-	chmod -R 0777 $(PWD)
-	cp $(PWD)/docker/database/dump/$(DB_NAME).sql /opt/backup/`date +'%Y%m%d'`/$(DB_NAME).sql
-
-.PHONY: download # Download database backup.
-download:
-	rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql
-	scp -i $(AWS_SSH_KEY) $(AWS_USER)@$(AWS_HOST):/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql $(PWD)/docker/database/dump/chat_mgsi.sql
-
-.PHONY: train # Train RASA.
+.PHONY: train # Trains a model using your NLU data and stories, saves trained model in ./models.
 train:
-	- rm -f $(PWD)/stopwatch.txt
-
-	@echo `date +'%Y-%m-%d %H:%M:%S'` >> $(PWD)/stopwatch.txt
-
-	- rm -rf $(PWD)/rasa/models/*.tar.gz \
+	- rm -rf $(PWD)/rasa/.rasa/cache \
 			 $(PWD)/src/storage/rasa/data/*.yml \
+  			 $(PWD)/rasa/models/*.tar.gz \
 			 $(PWD)/src/storage/rasa/*.yml \
-			 $(PWD)/rasa/out.log \
-			 $(PWD)/rasa/.rasa/cache
+			 $(PWD)/rasa/out.log
 
 	$(MAKE) generate
 
-	export NUMEXPR_MAX_THREADS="24"
+	export NUMEXPR_MAX_THREADS=24
 
 	docker exec -it rasa sh -c 'rasa train'
-	docker-compose -f $(PWD)/docker/docker-compose.yaml restart rasa
+	$(MAKE) restart CONTAINERS='rasa rasa-sdk'
 	docker exec -it rasa sh -c 'rasa run actions'
 
-	sleep 120
+	$(MAKE) pause PERIOD=120
 
-	@echo `date +'%Y-%m-%d %H:%M:%S'` >> $(PWD)/stopwatch.txt
-
-.PHONY: generate # Generate RASA .yml files.
+.PHONY: generate # Generate NLU data and stories.
 generate:
 	chmod -R 0777 $(PWD)
 
@@ -170,6 +125,59 @@ generate:
 
 	chmod -R 0777 $(PWD)
 
-.PHONY: ssh # SSH on AWS.
-ssh:
-	ssh -i "$(PWD)/$(AWS_SSH_KEY)" $(AWS_USER)@$(AWS_HOST)
+.PHONY: restart-rasa # Restart containers.
+restart:
+	docker-compose --file $(PWD)/docker/docker-compose.yaml restart $(CONTAINERS)
+
+.PHONY: status # List all images, volumes and containers status.
+status:
+	@echo "--------------------------------------------------"
+	docker ps -a
+	@echo "--------------------------------------------------"
+	docker images
+	@echo "--------------------------------------------------"
+	docker volume ls
+	@echo "--------------------------------------------------"
+
+.PHONY: push # Update GIT remote refs along with associated objects.
+push:
+	if [ $(APP_ENV) = "dev" ]; \
+		then $(PWD)/bash/push.sh; \
+	fi
+
+.PHONY: php # Open php container shell terminal.
+php:
+	docker exec -it php sh
+
+.PHONY: restore # Restore the latest PostgreSQL database backup.
+restore:
+	docker exec -it postgres sh -c 'dropdb -f $(DB_NAME) && createdb $(DB_NAME) && psql -U $(DB_USER) $(DB_NAME) < /opt/dump/$(DB_NAME).sql'
+
+.PHONY: logs # Show logs for selected containers. Provide `NAME` variable with container name to show the last 50 logs.
+logs:
+	docker logs $(NAME) --tail=50
+
+.PHONY: nginx # Reload nginx configuration.
+nginx:
+	docker exec -it nginx sh -c 'nginx -s reload'
+
+.PHONY: store-backup # Store backup database SQL file into /opt/backup.
+store-backup:
+	if [ $(APP_ENV) = "prod" ]; \
+		then - mkdir -p /opt/backup/`date +'%Y%m%d'` \
+             $(MAKE) backup \
+             chmod -R 0777 $(PWD) \
+             cp $(PWD)/docker/database/dump/$(DB_NAME).sql /opt/backup/`date +'%Y%m%d'`/$(DB_NAME).sql;  \
+	fi
+
+.PHONY: backup # Backup PostgreSQL database.
+backup:
+	docker exec -it postgres sh -c 'pg_dump -U $(DB_USER) $(DB_NAME) > /opt/dump/$(DB_NAME).sql'
+
+.PHONY: download # Download the latest PostgreSQL database backup.
+download:
+	if [ $(APP_ENV) = "dev" ]; \
+		then - rm -rf $(PWD)/docker/database/dump/chat_mgsi.sql \
+        	   scp -i $(AWS_SSH_KEY) $(AWS_USER)@$(AWS_HOST):"/opt/backup/`date +'%Y%m%d'`/chat_mgsi.sql" \
+        	          $(PWD)/docker/database/dump/chat_mgsi.sql; \
+	fi
